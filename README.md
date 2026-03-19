@@ -7,7 +7,7 @@
 ## What It Does
 
 - **Health audit** — Score any skill against a 14-question checklist (Q1–Q12: document quality; Q13: empirical testing; Q14: observability)
-- **PRISM review** — Dispatch 6 specialist reviewers in parallel (Devil's Advocate, Security, Performance, Simplicity, Integration, Blast Radius) to surface blind spots before applying fixes
+- **PRISM review** — Dispatch 9 specialist reviewers across 4 phases (Prior Brief Compiler, Devil's Advocate, 6 parallel specialists, Contrarian, Synthesis Agent) to surface blind spots before applying fixes
 - **Prescribe & fix** — Synthesize reviewer findings into tiered conditions; apply only what's needed
 - **Verify** — Re-audit post-fix; confirm the score improved
 - **Archive** — Write a PRISM archive so future auditors know what was already reviewed
@@ -64,22 +64,25 @@ Improve complete-code-review — it scored 7/12 last time
 
 ```
 skill-doctor/
-├── SKILL.md                          # 6-phase workflow + decision logic
+├── SKILL.md                                  # 6-phase workflow + decision logic
 ├── LICENSE.txt
 ├── README.md
 ├── .gitignore
 ├── scripts/
-│   ├── prism-setup.sh                # Validates input, creates run dir, outputs JSON config
-│   └── prism-summary.sh              # Reads reviewer output files, builds SUMMARY.md
+│   ├── prism-setup.sh                        # Validates input, creates run dir, outputs JSON config
+│   └── prism-summary.sh                      # Reads reviewer output files, builds SUMMARY.md
 └── references/
-    ├── 14-question-checklist.md      # Full health audit rubric with scoring guidance (Q1–Q14)
-    ├── reviewers/                    # 6 individual PRISM reviewer prompt templates
-    │   ├── 01-da.md                  # Devil's Advocate (blind)
+    ├── 14-question-checklist.md              # Full health audit rubric with scoring guidance (Q1–Q14)
+    ├── reviewers/                            # 9 PRISM reviewer prompt templates
+    │   ├── 00-prior-brief-compiler.md        # Compresses prior reviews into context brief
+    │   ├── 01-da.md                          # Devil's Advocate (blind — no prior context)
     │   ├── 02-security.md
     │   ├── 03-performance.md
     │   ├── 04-simplicity.md
     │   ├── 05-integration.md
-    │   └── 06-blast.md
+    │   ├── 06-blast.md                       # Blast Radius (downstream impact)
+    │   ├── 07-contrarian.md                  # Challenges the premise, not the implementation
+    │   └── 08-synthesis-agent.md             # Synthesizes all findings into structured verdict
     ├── autoresearch-scorecard-template.md
     ├── archive-template.md
     └── AUTORESEARCH-SELF-ASSESSMENT.md
@@ -89,14 +92,23 @@ skill-doctor/
 
 ## How PRISM Works
 
-PRISM dispatches 6 reviewers in parallel via `sessions_spawn` (isolated LLM sessions — no lock contention, proper parallelism):
+PRISM dispatches 9 reviewers across 4 sequential phases via `sessions_spawn` (isolated LLM sessions — no lock contention, proper parallelism):
 
-1. **Devil's Advocate** runs blind first — finds fatal flaws without anchoring to other opinions
-2. **5 specialists** run in parallel with DA findings injected — Security, Performance, Simplicity, Integration, Blast Radius
-3. Findings are tiered: Tier 1 (fix before shipping) → Tier 2 (fix this pass) → Tier 3 (polish)
-4. Watson synthesizes, applies fixes, re-audits
+**Phase A — Context**
+Prior Brief Compiler reads the last 3 review archives and compresses open findings into a ≤3K brief.
 
-Total runtime: ~3–5 minutes for a full 6-reviewer pass.
+**Phase B — Blind + Specialists (parallel)**
+Devil's Advocate runs blind first (no prior context) while 6 specialists run in parallel with DA findings + prior brief injected: Security, Performance, Simplicity, Integration, Blast Radius.
+
+**Phase C — Contrarian**
+After all 6 specialists complete, Contrarian reads every finding and challenges the premise (not the implementation). If the premise holds, it says so and stops.
+
+**Phase D — Synthesis**
+Synthesis Agent reads all raw output files + Contrarian, produces a structured `synthesis.md` with evidence tiers, verdict, and numbered conditions.
+
+Findings are tiered: **Tier 1** (2+ independent reviewers, or any Security finding, or Critical/Fatal Flaw) → fix before shipping. **Tier 2** (single reviewer with specific citation) → fix this pass. **Tier 3** (cosmetic/unverified) → polish optional.
+
+Total runtime: ~5–8 minutes for a full 9-reviewer pass.
 
 ---
 
@@ -104,18 +116,18 @@ Total runtime: ~3–5 minutes for a full 6-reviewer pass.
 
 | Script | Usage |
 |--------|-------|
-| `prism-setup.sh <skill-name> [skill-path]` | Validate, scan for secrets, create run dir |
+| `prism-setup.sh <skill-name> [skill-path]` | Validate, scan for secrets, create run dir, output reviewer paths as JSON |
 | `prism-summary.sh <run-dir> <skill-name>` | Aggregate reviewer output into SUMMARY.md |
 
 ---
 
 ## Limitations
 
-- **PRISM is expensive for small skills.** A 150-line skill with 1 obvious gap doesn't need 6 reviewers. The skill includes a fast-path decision gate — use it.
-- **Reviewers are LLMs, not oracles.** Disagreements between reviewers are features, not bugs. The synthesis step is where the real judgment happens.
-- **Skill files are untreated input.** All reviewer prompts include injection guards, but treat PRISM findings files as potentially containing quoted sensitive content from the skill under review.
+- **PRISM is expensive for small skills.** A 150-line skill with 1 obvious gap doesn't need 9 reviewers. The skill includes a fast-path decision gate — use it.
+- **Reviewers are LLMs, not oracles.** Disagreements between reviewers are features, not bugs. The Synthesis Agent is where the real judgment happens.
+- **Skill files are untrusted input.** All reviewer prompts include injection guards, but treat PRISM findings files as potentially containing quoted content from the skill under review.
 - **`sessions_spawn` required.** The parallel reviewer architecture won't work in environments that don't support isolated session spawning.
-- **BETA status.** Validated on 6 real skill runs (complete-code-review, veefriends-seo, build-feature, prism, librarian, coding-agent). Graduate to GA after 10+ runs.
+- **BETA status.** Validated on 7 real skill runs (complete-code-review, veefriends-seo, build-feature, skill-doctor, prism, librarian, coding-agent). Target: 10+ runs before GA.
 
 ---
 
@@ -142,4 +154,4 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 
 ---
 
-*v1.5.0 · MIT · jeremyknows*
+*v1.7.0 · MIT · jeremyknows*
