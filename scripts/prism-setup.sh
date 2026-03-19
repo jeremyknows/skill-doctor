@@ -102,14 +102,18 @@ printf '%s\n' "$(cat <<EOF
   "run_dir": "$RUN_DIR",
   "skill_md": "$SKILL_PATH/SKILL.md",
   "reviewer_dir": "$REVIEWER_DIR",
-  "reviewers": [
-    "$REVIEWER_DIR/01-da.md",
-    "$REVIEWER_DIR/02-security.md",
-    "$REVIEWER_DIR/03-performance.md",
-    "$REVIEWER_DIR/04-simplicity.md",
-    "$REVIEWER_DIR/05-integration.md",
-    "$REVIEWER_DIR/06-blast.md"
-  ],
+  "archive_dir": "$REVIEW_ARCHIVE_DIR",
+  "reviewers": {
+    "prior_brief_compiler": "$REVIEWER_DIR/00-prior-brief-compiler.md",
+    "devil_advocate": "$REVIEWER_DIR/01-da.md",
+    "security": "$REVIEWER_DIR/02-security.md",
+    "performance": "$REVIEWER_DIR/03-performance.md",
+    "simplicity": "$REVIEWER_DIR/04-simplicity.md",
+    "integration": "$REVIEWER_DIR/05-integration.md",
+    "blast_radius": "$REVIEWER_DIR/06-blast.md",
+    "contrarian": "$REVIEWER_DIR/07-contrarian.md",
+    "synthesis_agent": "$REVIEWER_DIR/08-synthesis-agent.md"
+  },
   "manifest": "$RUN_DIR/manifest.json",
   "secret_count": $SECRET_COUNT
 }
