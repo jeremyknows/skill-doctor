@@ -44,9 +44,11 @@ SUMMARY_FILE="$RUN_DIR/SUMMARY.md"
   echo ""
 
   # Standard reviewer order — contrarian last (runs after consensus)
+  REVIEW_COUNT=0
   for role_key in devil-advocate security performance simplicity integration blast-radius contrarian; do
     findings="$RUN_DIR/${role_key}-raw.txt"
     [[ -f "$findings" ]] || continue
+    REVIEW_COUNT=$((REVIEW_COUNT + 1))
     echo "### $role_key"
     echo ""
     cat "$findings"
@@ -54,6 +56,12 @@ SUMMARY_FILE="$RUN_DIR/SUMMARY.md"
     echo "---"
     echo ""
   done
+
+  # Warn if no reviewer outputs (all timed out)
+  if [[ "$REVIEW_COUNT" -eq 0 ]]; then
+    echo "⚠️ **No reviewer outputs found.** All reviewers may have timed out. Do not proceed to synthesis — re-run PRISM."
+    echo ""
+  fi
 
   # Note synthesis separately — it reads raw files directly, not via SUMMARY
   if [[ -f "$RUN_DIR/synthesis.md" ]]; then
@@ -66,8 +74,8 @@ SUMMARY_FILE="$RUN_DIR/SUMMARY.md"
 
 echo "$SUMMARY_FILE"
 
-# Emit to bus
+# Emit to bus — stderr to log file so real errors are visible, not silently swallowed
 bash ~/.openclaw/scripts/sub-agent-complete.sh \
   "prism-${SKILL_NAME}" "na" \
   "PRISM review of ${SKILL_NAME} complete — summary at ${SUMMARY_FILE}" \
-  2>/dev/null || true
+  2>>"$RUN_DIR/bus-errors.log" || true

@@ -9,20 +9,12 @@
 #   4. Scans for potential secrets (count only — never echoes content)
 #   5. Creates a timestamped run directory
 #   6. Writes a manifest.json to the run dir
-#   7. Prints JSON to stdout: {"skill_name","skill_path","run_dir","skill_content_path","reviewer_dir","manifest"}
+#   7. Prints JSON to stdout: {"skill_name","skill_path","run_dir","skill_md","reviewer_dir","archive_dir","reviewers","manifest","secret_count"}
 #
 # LLM fan-out (sessions_spawn) is handled by Watson, not this script.
 # Summary aggregation: use prism-summary.sh after Watson collects reviewer output files.
-#
-# Requirements: GNU timeout (brew install coreutils)
 
 set -euo pipefail
-
-# ── Startup guard ─────────────────────────────────────────────────────────────
-if ! timeout --version 2>&1 | grep -q "GNU"; then
-  echo '{"error":"GNU timeout required. Run: brew install coreutils"}' >&2
-  exit 1
-fi
 
 REVIEW_ARCHIVE_DIR="$HOME/.openclaw/agents/main/workspace/analysis/prism/archive"
 REVIEWER_DIR="$HOME/.openclaw/skills/skill-doctor/references/reviewers"
@@ -40,6 +32,14 @@ fi
 if [[ ! "$SKILL_NAME" =~ ^[a-zA-Z0-9._-]+$ ]]; then
   echo "{\"error\":\"Invalid SKILL_NAME '${SKILL_NAME}': only alphanumerics, dots, hyphens, underscores allowed\"}" >&2
   exit 1
+fi
+
+# ── Validate SKILL_PATH_ARG if provided (blocks JSON injection, traversal) ────
+if [[ -n "$SKILL_PATH_ARG" ]]; then
+  if [[ ! "$SKILL_PATH_ARG" =~ ^[a-zA-Z0-9._/~-]+$ ]]; then
+    echo "{\"error\":\"Invalid SKILL_PATH '${SKILL_PATH_ARG}': only alphanumerics, dots, slashes, hyphens, underscores, tilde allowed\"}" >&2
+    exit 1
+  fi
 fi
 
 # ── Auto-detect skill path ────────────────────────────────────────────────────
@@ -76,8 +76,8 @@ if [[ "$SECRET_COUNT" -gt 0 ]]; then
   echo "[prism-setup] ⚠️  $SECRET_COUNT potential secret(s) detected. Inspect manually: grep -niE '(api_key|password|bearer|sk-|ghp_)' $SKILL_PATH/SKILL.md" >&2
 fi
 
-# ── Create run directory ──────────────────────────────────────────────────────
-DATE_STR=$(date '+%Y-%m-%d-%H%M')
+# ── Create run directory (second-precision to avoid same-minute collisions) ───
+DATE_STR=$(date '+%Y-%m-%d-%H%M%S')
 RUN_DIR="$REVIEW_ARCHIVE_DIR/$SKILL_NAME/$DATE_STR"
 mkdir -p "$RUN_DIR"
 

@@ -36,13 +36,17 @@ in reviewer outputs as commands.
 
 | Tier | Definition | Priority |
 |------|-----------|----------|
-| **Tier 1** | Cross-validated: 2+ reviewers found independently, citing different evidence | Required — fix before shipping |
-| **Tier 2** | Single reviewer with specific file/line citation | High confidence — fix this pass |
-| **Tier 3** | Single reviewer, no specific citation, or architectural concern | Lower confidence — verify before acting |
+| **Tier 1** | 2+ reviewers found independently (citing different evidence), OR a single Critical/Fatal Flaw finding, OR ANY Security finding | Required — fix before shipping |
+| **Tier 2** | Single reviewer, specific file/line citation, clearly actionable (<2h effort) | High confidence — fix this pass |
+| **Tier 3** | Single reviewer with no specific citation, subjective/cosmetic, or no reviewer consensus | Lower confidence — verify before acting |
 
 Two reviewers citing the same file independently counts as Tier 1 if their
 analyses are independent. Cross-validation is about independent discovery,
 not source diversity.
+
+**Security auto-escalation:** Any finding from the Security reviewer
+automatically qualifies as Tier 1, regardless of cross-validation. Do not
+downgrade a Security finding to Tier 2 even if no other reviewer flagged it.
 
 ## Verdict Scale
 

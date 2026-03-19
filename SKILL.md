@@ -1,7 +1,7 @@
 ---
 name: skill-doctor
 description: Diagnose, audit, and improve existing AgentSkills. Use when: (1) running a health audit on a skill, (2) improving a skill that scores below 11/14, (3) running PRISM review on a skill, (4) extracting references/ for progressive disclosure, (5) autoresearch loop on a skill's outputs. Triggers on: "audit this skill", "improve this skill", "run PRISM on", "health check this skill", "run autoresearch on", "skill-doctor". NOT for: creating a skill from scratch (use skill-creator), publishing a skill to GitHub (use publish-skills), or reviewing code in a software project (use complete-code-review).
-version: 1.6.0
+version: 1.7.0
 license: MIT
 taxonomy_category: Code Quality & Review
 health_score: 12/14
@@ -161,7 +161,7 @@ bash ~/.openclaw/skills/skill-doctor/scripts/prism-summary.sh "$RUN_DIR" "<skill
 **Why `sessions_spawn` not `openclaw agent --local`:**
 `openclaw agent --local --agent main` serializes on the main session file — concurrent calls deadlock. `sessions_spawn` creates isolated sessions with independent file paths. No lock contention, proper parallel execution.
 
-**Round 2:** New run dir via setup. DA is NOT re-run — copy `devil-advocate-raw.txt` from Round 1 into the new run dir. Re-run Phase B–D only. Prior Brief Compiler re-runs (it will now see Round 1's archive).
+**Round 2:** New run dir via setup. DA is NOT re-run — copy `devil-advocate-raw.txt` from Round 1 into the new run dir. Re-run Phase B–D only. Prior Brief Compiler re-runs (it will see Round 1's run directory, which was created by `prism-setup.sh` inside the archive path and contains `synthesis.md` — this counts as a prior review even before Phase 6 archiving).
 
 **Timeout behaviour:** Stalled Phase B reviewers are skipped. A 4/5 result is valid — synthesis agent notes timeouts in its output. Do not re-run a full PRISM for a single timeout.
 
@@ -330,6 +330,7 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 ## Dependencies
 
 - `sessions_spawn` — PRISM parallel reviewer dispatch
+- GNU `timeout` (coreutils) — **Not used by current scripts** but required if you run any reviewer subcommands via bare `timeout` wrapper. Install: `brew install coreutils`. Not strictly required for Watson-driven `sessions_spawn` fan-out.
 - `prism` skill — Full PRISM protocol details (if needed beyond this skill's templates)
 - `complete-code-review` skill — For software code review; this skill is for skill files only
 - `skill-creator` skill — For creating new skills from scratch; this skill improves existing ones
@@ -370,4 +371,4 @@ Full self-assessment, worked examples, improvement log: `references/AUTORESEARCH
 
 ---
 
-*v1.6.0 — Watson 🎩 | 2026-03-18 | +3 reviewers: Contrarian (premise challenge), Prior Brief Compiler, Synthesis Agent*
+*v1.7.0 — Watson 🎩 | 2026-03-18 | complete-code-review: B1–B3 + S1–S9 all fixed; 12 issues resolved*
