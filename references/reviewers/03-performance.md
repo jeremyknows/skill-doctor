@@ -38,5 +38,5 @@ Output format:
 - Fast-path recommendation: [if applicable]
 - Verdict: [APPROVE | APPROVE WITH CONDITIONS | NEEDS WORK | REJECT]
 
-Write findings to: {{RUN_DIR}}/03-performance.md
+Write findings to: {{RUN_DIR}}/performance-raw.txt
 Then run: bash ~/.openclaw/scripts/sub-agent-complete.sh "prism-performance-{{SKILL_NAME}}" "na" "PRISM Performance review of {{SKILL_NAME}} complete"

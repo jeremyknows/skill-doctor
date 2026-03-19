@@ -36,5 +36,5 @@ Output format:
 - Consolidation candidates: [which sections to merge]
 - Verdict: [APPROVE | APPROVE WITH CONDITIONS | SIMPLIFY FURTHER | REJECT]
 
-Write findings to: {{RUN_DIR}}/04-simplicity.md
+Write findings to: {{RUN_DIR}}/simplicity-raw.txt
 Then run: bash ~/.openclaw/scripts/sub-agent-complete.sh "prism-simplicity-{{SKILL_NAME}}" "na" "PRISM Simplicity review of {{SKILL_NAME}} complete"

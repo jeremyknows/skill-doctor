@@ -6,7 +6,7 @@
 
 ## What It Does
 
-- **Health audit** — Score any skill against a 14-question checklist (trigger conditions, gotchas, dependencies, progressive disclosure, autoresearch loop, and more)
+- **Health audit** — Score any skill against a 14-question checklist (Q1–Q12: document quality; Q13: empirical testing; Q14: observability)
 - **PRISM review** — Dispatch 6 specialist reviewers in parallel (Devil's Advocate, Security, Performance, Simplicity, Integration, Blast Radius) to surface blind spots before applying fixes
 - **Prescribe & fix** — Synthesize reviewer findings into tiered conditions; apply only what's needed
 - **Verify** — Re-audit post-fix; confirm the score improved
@@ -72,7 +72,7 @@ skill-doctor/
 │   ├── prism-setup.sh                # Validates input, creates run dir, outputs JSON config
 │   └── prism-summary.sh              # Reads reviewer output files, builds SUMMARY.md
 └── references/
-    ├── 12-question-checklist.md      # Full health audit rubric with scoring guidance
+    ├── 14-question-checklist.md      # Full health audit rubric with scoring guidance (Q1–Q14)
     ├── reviewers/                    # 6 individual PRISM reviewer prompt templates
     │   ├── 01-da.md                  # Devil's Advocate (blind)
     │   ├── 02-security.md
@@ -142,4 +142,4 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 
 ---
 
-*v1.4.0 (BETA) · MIT · jeremyknows*
+*v1.5.0 · MIT · jeremyknows*

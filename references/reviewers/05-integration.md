@@ -47,5 +47,5 @@ Output format:
 - Deprecated name refs: [any stale names]
 - Verdict: [APPROVE | APPROVE WITH CONDITIONS | NEEDS WORK | REJECT]
 
-Write findings to: {{RUN_DIR}}/05-integration.md
+Write findings to: {{RUN_DIR}}/integration-raw.txt
 Then run: bash ~/.openclaw/scripts/sub-agent-complete.sh "prism-integration-{{SKILL_NAME}}" "na" "PRISM Integration review of {{SKILL_NAME}} complete"

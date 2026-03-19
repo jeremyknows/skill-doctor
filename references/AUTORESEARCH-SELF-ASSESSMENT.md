@@ -1,29 +1,29 @@
 # skill-doctor Self-Assessment (Autoresearch)
 
-Extracted from SKILL.md v1.4. Last updated: 2026-03-18.
+Extracted from SKILL.md v1.5.0. Last updated: 2026-03-18.
 
 ---
 
-## Q1–Q14 Scoring (v1.4)
+## Q1–Q14 Scoring (v1.5.0)
 
 | # | Question | Answer | Rationale |
 |---|----------|--------|-----------|
 | Q1 | Description as trigger conditions? | YES | Lists 5 specific use cases + NOT FOR list |
 | Q2 | Gotchas section? | YES | Explicit Known Limitations & Gotchas section, 10 entries |
-| Q3 | Progressive disclosure? | YES | references/reviewers/, 12-question-checklist, autoresearch, archive-template, prism-templates |
+| Q3 | Progressive disclosure? | YES | references/reviewers/, 14-question-checklist, autoresearch, archive-template, prism-templates |
 | Q4 | Avoids railroading? | YES | Phase gates are decision frameworks, not iron laws |
 | Q5 | Config state correct? | N/A | No persistent state |
-| Q6 | Scripts/helpers bundled? | YES | prism-setup.sh, prism-summary.sh, review-common.sh |
+| Q6 | Scripts/helpers bundled? | YES | prism-setup.sh, prism-summary.sh |
 | Q7 | Output scoreable? | YES | Before/after score table; PRISM verdict table |
 | Q8 | 9-category fit? | YES | Code Quality & Review |
 | Q9 | Not over-triggered? | YES | Very specific triggers |
 | Q10 | Examples present? | YES | Worked example (build-feature Phase 1→6) |
 | Q11 | Dependencies documented? | YES | Full Dependencies section |
 | Q12 | Verification hooks? | YES | Phase 5 explicit |
-| Q13 | Empirical testing? | PARTIAL | 3 skills run this session; no formal output scoring |
-| Q14 | Observability? | PARTIAL | sub-agent-complete.sh on Phase 6; no structured run log |
+| Q13 | Empirical testing? | PARTIAL | 6 skills run this session; consistent results, no formal output log yet |
+| Q14 | Observability? | PARTIAL | sub-agent-complete.sh on Phase 6 + prism-summary.sh on review completion; no per-run quality log |
 
-**Score:** 11.5/14 (12/12 on original checklist, 82% on extended checklist)
+**Score:** 12/14
 
 ---
 

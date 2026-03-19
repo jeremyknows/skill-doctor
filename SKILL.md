@@ -1,11 +1,11 @@
 ---
 name: skill-doctor
-description: Diagnose, audit, and improve existing AgentSkills. Use when: (1) running a health audit on a skill, (2) improving a skill that scores below 9/12, (3) running PRISM review on a skill, (4) extracting references/ for progressive disclosure, (5) autoresearch loop on a skill's outputs. Triggers on: "audit this skill", "improve this skill", "run PRISM on", "health check this skill", "run autoresearch on", "skill-doctor". NOT for: creating a skill from scratch (use skill-creator), publishing a skill to GitHub (use publish-skills), or reviewing code in a software project (use complete-code-review).
-version: 1.4.0
+description: Diagnose, audit, and improve existing AgentSkills. Use when: (1) running a health audit on a skill, (2) improving a skill that scores below 11/14, (3) running PRISM review on a skill, (4) extracting references/ for progressive disclosure, (5) autoresearch loop on a skill's outputs. Triggers on: "audit this skill", "improve this skill", "run PRISM on", "health check this skill", "run autoresearch on", "skill-doctor". NOT for: creating a skill from scratch (use skill-creator), publishing a skill to GitHub (use publish-skills), or reviewing code in a software project (use complete-code-review).
+version: 1.5.0
 license: MIT
 taxonomy_category: Code Quality & Review
-health_score: 10/12
-status: BETA
+health_score: 12/14
+status: GA
 last_improved: 2026-03-18
 metadata:
   author: jeremyknows
@@ -16,15 +16,14 @@ metadata:
 Diagnose what's wrong with a skill. Prescribe fixes. Verify they worked.
 
 **Reference docs:**
-- `references/12-question-checklist.md` — Full health audit checklist with scoring guidance
+- `references/14-question-checklist.md` — Full health audit checklist with scoring guidance (Q1–Q14)
 - `references/reviewers/` — 6 individual reviewer prompt templates (01-da.md … 06-blast.md)
 - `references/prism-templates.md` — Legacy combined templates (use reviewers/ for new runs)
 - `references/autoresearch-scorecard-template.md` — Scorecard template per content type
 
 **Scripts:**
 - `scripts/prism-setup.sh` — Scaffolding: validates input, finds skill, scans for secrets, creates run dir, outputs JSON config for Watson
-- `scripts/prism-summary.sh` — Aggregation: reads *-raw.txt files from run dir, builds SUMMARY.md
-- `~/.openclaw/scripts/review-common.sh` — Shared lib (logging, validation, template injection, summary building)
+- `scripts/prism-summary.sh` — Aggregation: reads `*-raw.txt` files from run dir, builds SUMMARY.md
 
 **Architecture:** LLM reviewer fan-out uses `sessions_spawn` (isolated sessions, no lock contention). Bash handles only deterministic work. See Phase 2 for protocol.
 
@@ -34,8 +33,8 @@ Diagnose what's wrong with a skill. Prescribe fixes. Verify they worked.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Phase 1: Diagnose          Run 12-question health audit     │
-│  Phase 2: Review            PRISM (if score < 9/12)         │
+│  Phase 1: Diagnose          Run 14-question health audit     │
+│  Phase 2: Review            PRISM (if score < 11/14)        │
 │  Phase 3: Prescribe         Synthesize conditions           │
 │  Phase 4: Fix               Apply conditions                │
 │  Phase 5: Verify            Re-audit + confirm improvement  │
@@ -44,7 +43,7 @@ Diagnose what's wrong with a skill. Prescribe fixes. Verify they worked.
 ```
 
 **Fast-path decision — skip PRISM if ALL of the following are true:**
-- [ ] Score ≥ 9/12
+- [ ] Score ≥ 11/14
 - [ ] Gaps are obvious and uncontroversial (missing section, missing dependency entry)
 - [ ] Fix is additive only — no section deletions, no restructuring, no extractions
 - [ ] Skill is not high-traffic (see definition below)
@@ -54,11 +53,11 @@ If any box is unchecked → run PRISM.
 
 **High-traffic definition:** A skill is high-traffic if it's invoked ≥10 times/month OR is in this list: `build-feature`, `complete-code-review`, `skill-creator`, `skill-doctor`. To add a skill to the list, update this section.
 
-**Always run PRISM if:** score ≤ 7/12, skill is high-traffic, fix involves restructuring or extracting references/, or Jeremy says "do it right".
+**Always run PRISM if:** score ≤ 9/14, skill is high-traffic, fix involves restructuring or extracting references/, or Jeremy says "do it right".
 
 ---
 
-## Phase 1: Diagnose — 12-Question Health Audit
+## Phase 1: Diagnose — 14-Question Health Audit
 
 Read the skill. Score each question YES / PARTIAL / NO / N/A.
 
@@ -69,14 +68,17 @@ grep "^## \|^# " <skill-path>/SKILL.md
 ls <skill-path>/
 ```
 
-Then score against the 12 questions. See `references/12-question-checklist.md` for full guidance.
+Then score against all 14 questions. See `references/14-question-checklist.md` for full guidance.
+- Q1–Q12: Document quality (structure, triggers, gotchas, etc.)
+- Q13: Empirical testing (has it been run on real inputs with scored outputs?)
+- Q14: Observability (does it emit signals on completion/failure?)
 
 **Score conversion:** YES=1, PARTIAL=0.5, NO=0, N/A=excluded from denominator.
 
 **Threshold:**
-- 10–12: Healthy. Autoresearch only.
-- 8–9: Minor gaps. Fix without PRISM unless skill is high-traffic.
-- ≤7: PRISM required before touching.
+- 12–14: Healthy. Autoresearch only.
+- 10–11: Minor gaps. Fix without PRISM unless skill is high-traffic.
+- ≤9: PRISM required before touching.
 
 Present the full scoring table + gap summary before proceeding.
 
@@ -93,7 +95,7 @@ grep -iE "(api_key|secret|password|token|bearer|sk-|ghp_)" <skill-path>/SKILL.md
 ```
 If hits found: flag to Jeremy before running PRISM. Do not let reviewers quote credentials into findings files.
 
-Spawn 6 reviewers in parallel. See `references/prism-templates.md` for exact prompts.
+Spawn 6 reviewers in parallel. See individual templates in `references/reviewers/` for exact prompts. (`references/prism-templates.md` is a legacy combined file — use the individual reviewer files for new runs.)
 
 **Reviewer roster:**
 1. 😈 **Devil's Advocate** — blind (no prior findings)
@@ -112,9 +114,9 @@ echo "$PRISM_CONFIG"
 
 **Step 2 — DA (blind, first, isolated):**
 - Read reviewer template: `$REVIEWER_DIR/01-da.md`
-- Inject `{{SKILL_NAME}}`, `{{SKILL_PATH}}`, `{{RUN_DIR}}`, `{{DA_FINDINGS}}` = "(blind review)"
+- Inject `{{SKILL_NAME}}`, `{{SKILL_PATH}}`, `{{RUN_DIR}}` only — **do NOT inject `{{DA_FINDINGS}}`**; DA is blind and the template does not use that variable
 - Spawn: `sessions_spawn(task=<injected-prompt>, mode="run", runTimeoutSeconds=120)`
-- Write output to: `$RUN_DIR/devil-advocate-raw.txt`
+- DA writes to: `$RUN_DIR/devil-advocate-raw.txt`
 
 **Step 3 — 5 reviewers in parallel (with DA findings):**
 - For each template in `$REVIEWER_DIR/02-security.md` … `06-blast.md`:
@@ -134,7 +136,7 @@ Read `SUMMARY.md`. Synthesize findings into tiers (see Phase 3).
 **Why `sessions_spawn` not `openclaw agent --local`:**
 `openclaw agent --local --agent main` serializes on the main session file — concurrent calls deadlock. `sessions_spawn` creates isolated sessions with independent file paths. No lock contention, proper parallel execution.
 
-**Round 2:** Run setup again (new run dir), skip DA spawn — copy existing DA findings to new run dir, then re-run steps 3–4.
+**Round 2:** Run setup again (new run dir). DA is NOT re-run — copy `devil-advocate-raw.txt` from Round 1's run dir into the new run dir, then re-run steps 3–4 only. Round 2 reviewers receive the Round 1 DA findings as context.
 
 **Timeout behaviour:** Stalled reviewers are skipped — their raw file gets a `REVIEWER_TIMEOUT` note. A 5/6 result is valid; don't re-run just for one timeout.
 
@@ -213,7 +215,7 @@ Keep in core:
 
 ## Phase 5: Verify
 
-Re-run the 12-question audit. Confirm score improved. Check each fixed gap explicitly:
+Re-run the 14-question audit. Confirm score improved. Check each fixed gap explicitly:
 
 ```bash
 # Verify no broken spawn params
@@ -299,6 +301,7 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 - `docs/knowledge/skills/SKILLS-INVENTORY.md` — 115-skill catalogue with health scores
 - `docs/knowledge/skills/SKILL-HEALTH-SCORES.md` — Audit results, updated after each improvement
 - `bash ~/.openclaw/scripts/sub-agent-complete.sh` — Phase 6 bus emission
+- `bash ~/.openclaw/scripts/emit-event.sh` — Phase 6b stalled condition detection
 
 ---
 
@@ -317,17 +320,17 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 
 ## Autoresearch
 
-**Baseline:** 10/12 (self-scored, 2026-03-18 — PRISM dogfood validated)
-**Q13 (empirical):** ⚠️ PARTIAL — run on 3 skills this session (build-feature, veefriends-seo, complete-code-review). No formal output scoring yet.
-**Q14 (observability):** ⚠️ PARTIAL — sub-agent-complete.sh emitted on Phase 6, but no structured run log.
+**Baseline:** 12/14 (self-scored, 2026-03-18 — PRISM dogfood validated on 6 real skills)
+**Q13 (empirical):** ⚠️ PARTIAL — run on 6 skills this session (build-feature, veefriends-seo, complete-code-review, prism, librarian, coding-agent). Scoring is consistent; formal log in `references/AUTORESEARCH-SELF-ASSESSMENT.md`.
+**Q14 (observability):** ⚠️ PARTIAL — sub-agent-complete.sh emits on Phase 6; prism-summary.sh emits on review completion. No per-run quality log yet.
 
 **Mutation candidates (top 3):**
 1. Add helper script for common stale-ref grep (reduces Phase 4 friction)
-2. Empirically validate 12-question checklist against 10 known-bad skills
-3. Add structured run log to prism-setup.sh output (observability)
+2. Empirically validate 14-question checklist against 10 known-bad skills
+3. Add structured run log to prism-setup.sh output (moves Q14 from PARTIAL to YES)
 
 Full self-assessment, worked examples, improvement log: `references/AUTORESEARCH-SELF-ASSESSMENT.md`
 
 ---
 
-*v1.4 (BETA) — Watson 🎩 | 2026-03-18 | 3 real skill runs, PRISM dogfood complete*
+*v1.5.0 — Watson 🎩 | 2026-03-18 | 6 real skill runs, PRISM dogfood complete, accuracy-reviewed*

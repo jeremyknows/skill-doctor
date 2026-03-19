@@ -32,5 +32,5 @@ Output format:
 - Minor (polish): [findings with evidence]
 - Verdict: [APPROVE | APPROVE WITH CONDITIONS | NEEDS WORK | REJECT]
 
-Write findings to: {{RUN_DIR}}/02-security.md
+Write findings to: {{RUN_DIR}}/security-raw.txt
 Then run: bash ~/.openclaw/scripts/sub-agent-complete.sh "prism-security-{{SKILL_NAME}}" "na" "PRISM Security review of {{SKILL_NAME}} complete"

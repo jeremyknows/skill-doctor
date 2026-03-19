@@ -1,4 +1,4 @@
-# 12-Question Skill Health Checklist
+# 14-Question Skill Health Checklist
 
 **Source:** Watson's Skills Intelligence System, synthesized from Thariq/Anthropic research + Watson operational experience.
 
@@ -153,6 +153,8 @@ Score each question: **YES** (1.0) | **PARTIAL** (0.5) | **NO** (0) | **N/A** (e
 
 **Validation threshold:** Run on 3–5 distinct real inputs. Grade each output on the skill's own scorecard (Q7). If scoring criteria don't exist, that's a Q7 failure first.
 
+**Template:** See `references/autoresearch-scorecard-template.md` for a blank run-log template to fill in.
+
 ---
 
 ### Q14 — Observability
@@ -163,6 +165,8 @@ Score each question: **YES** (1.0) | **PARTIAL** (0.5) | **NO** (0) | **N/A** (e
 ❌ NO: Skill produces outputs with no trail — failures are invisible until someone notices.
 
 **Fix:** At minimum, emit `sub-agent-complete.sh` at the end of each run. Better: log a run summary with pass/fail indicators to a known path. Best: include a quick health-check command in the skill that validates a recent output.
+
+**Example:** See `references/AUTORESEARCH-SELF-ASSESSMENT.md` for a worked observability implementation.
 
 **Note:** This is often N/A for simple utility skills. Only mark as a real gap if the skill is in production for high-stakes workflows (content generation, external communications, code review).
 
@@ -185,7 +189,9 @@ Score each question: **YES** (1.0) | **PARTIAL** (0.5) | **NO** (0) | **N/A** (e
 | Q10 | Examples present? | | |
 | Q11 | Dependencies documented? | | |
 | Q12 | Verification hooks? | | |
+| Q13 | Empirical testing (3+ real runs scored)? | | |
+| Q14 | Observability (bus events / run log)? | | |
 
-**Score:** X/12
+**Score:** X/14  (new skills: N/A Q13 and Q14, score out of 12 until first real runs)
 **Gaps:** [list NO and PARTIAL items]
 ```

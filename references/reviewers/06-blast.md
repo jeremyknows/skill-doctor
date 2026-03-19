@@ -42,5 +42,5 @@ Output format:
 - Historical/archive refs: [file:line — acceptable, leave]
 - Verdict: [APPROVE | APPROVE WITH CONDITIONS | NEEDS WORK | REJECT]
 
-Write findings to: {{RUN_DIR}}/06-blast.md
+Write findings to: {{RUN_DIR}}/blast-radius-raw.txt
 Then run: bash ~/.openclaw/scripts/sub-agent-complete.sh "prism-blast-{{SKILL_NAME}}" "na" "PRISM Blast Radius review of {{SKILL_NAME}} complete"
