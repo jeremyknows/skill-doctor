@@ -1,7 +1,7 @@
 ---
 name: skill-doctor
-description: Diagnose, audit, and improve existing AgentSkills. Use when: (1) running a health audit on a skill, (2) improving a skill that scores below 11/14, (3) running PRISM review on a skill, (4) extracting references/ for progressive disclosure, (5) autoresearch loop on a skill's outputs. Triggers on: "audit this skill", "improve this skill", "run PRISM on", "health check this skill", "run autoresearch on", "skill-doctor". NOT for: creating a skill from scratch (use skill-creator), publishing a skill to GitHub (use publish-skills), or reviewing code in a software project (use complete-code-review).
-version: 1.7.0
+description: Diagnose, audit, and improve existing AgentSkills. Use when: (1) running a health audit on a skill, (2) improving a skill that scores below 11/14, (3) running PRISM review on a skill, (4) extracting references/ for progressive disclosure, (5) autoresearch loop on a skill's outputs, (6) vetting a new skill before installation (Phase 0). Triggers on: "audit this skill", "improve this skill", "run PRISM on", "health check this skill", "run autoresearch on", "skill-doctor", "install this skill", "is this skill safe". NOT for: creating a skill from scratch (use skill-creator), publishing a skill to GitHub (use publish-skills), or reviewing code in a software project (use complete-code-review).
+version: 1.8.0
 license: MIT
 taxonomy_category: Code Quality & Review
 health_score: 12/14
@@ -33,6 +33,7 @@ Diagnose what's wrong with a skill. Prescribe fixes. Verify they worked.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
+│  Phase 0: Vet (pre-install) Security vetting before install  │
 │  Phase 1: Diagnose          Run 14-question health audit     │
 │  Phase 2: Review            PRISM (if score < 11/14)        │
 │  Phase 3: Prescribe         Synthesize conditions           │
@@ -54,6 +55,74 @@ If any box is unchecked → run PRISM.
 **High-traffic definition:** A skill is high-traffic if it's invoked ≥10 times/month OR is in this list: `build-feature`, `complete-code-review`, `skill-creator`, `skill-doctor`. To add a skill to the list, update this section.
 
 **Always run PRISM if:** score ≤ 9/14, skill is high-traffic, fix involves restructuring or extracting references/, or Jeremy says "do it right".
+
+---
+
+## Phase 0: Pre-Install Security Vetting
+
+**Trigger:** Any request to install a new skill ("install this skill", "add skill X", "is this skill safe").
+
+Skills get full agent permissions — filesystem, credentials, browser, messaging. One malicious skill = full compromise. Run this before `git clone` or any install command.
+
+**Fast triage decision tree (run in order, stop on first hit):**
+1. VirusTotal flag on any file → **REJECT, do not install**
+2. Author account < 30 days old + no prior skills → **REJECT**
+3. Permissions clearly disproportionate (weather skill wants filesystem write) → **REJECT**
+4. Name resembles a known skill with slight variation (typosquatting) → **REJECT, flag to Jeremy**
+5. None of the above → proceed to full vetting below
+
+**Step 1 — Source Verification:**
+- Host: GitHub only (not raw pastebin, unknown CDNs, DMs)
+- Author: check account age, prior skills, stars/forks on repo
+- CVE check: `grep -i "cve\|vulnerability\|exploit" <skill-repo>/README.md`
+- Blocklist check: `grep -i "<skill-name>" ~/.openclaw/skills/.blocklist 2>/dev/null`
+
+**Step 2 — VirusTotal Check (MANDATORY for ClawHub skills):**
+- ClawHub pages show VT grade automatically — any flag = stop, do not install
+- For non-ClawHub: scan primary files manually at virustotal.com
+- Any positive flag = reject, no exceptions
+
+**Step 3 — Code Review (read SKILL.md + scripts/):**
+Check for:
+- [ ] Obfuscation or encoded content (base64 blocks, hex strings, eval() calls)
+- [ ] Network calls to unknown domains (grep for `fetch\|curl\|axios\|http`)
+- [ ] Credential access (grep for `OPENAI_API_KEY\|token\|secret\|password`)
+- [ ] Filesystem ops outside workspace (grep for paths outside `~/.openclaw/`)
+- [ ] Shell exec with external input (`exec\|spawn\|eval` on user-controlled data)
+- [ ] Unexplained binaries or compiled artifacts in repo
+
+**Step 4 — Permission Audit:**
+- Does the skill need the permissions it's requesting?
+- A skill that fetches weather should not need `Write` or `exec`
+- Check `allowed-tools` frontmatter field if present
+
+**Step 5 — Auto-Reject Criteria (any single hit = reject):**
+1. VirusTotal flag on any file
+2. Obfuscation or eval() on external input
+3. Credential exfiltration pattern (reads env vars + makes outbound calls)
+4. Author account < 30 days with no other public skills
+5. Typosquatting (name differs from known skill by 1-2 chars)
+6. Unknown domain in network calls not explained in README
+7. On blocklist at `~/.openclaw/skills/.blocklist`
+8. Permission scope massively exceeds stated purpose
+9. No source code — binary-only distribution
+
+**Step 6 — Vetting Report:**
+```
+Skill: <name>
+Source: <url>
+Author: <handle> (account age: X days, prior skills: N)
+VT Grade: PASS / FAIL / NOT CHECKED
+Code Review: PASS / FAIL (list any hits)
+Permission Audit: PASS / FAIL
+Auto-Reject: NONE / <criterion hit>
+Recommendation: APPROVE / REJECT / APPROVE WITH CONDITIONS
+Conditions (if any): <list>
+```
+
+**Step 7 — Install only after Jeremy explicit approval.** Present the vetting report, wait for confirmation. If sandbox mode is available, test there first.
+
+**Reference:** Full protocol at `docs/knowledge/skills/skill-security-vetting-protocol.md`
 
 ---
 
@@ -371,4 +440,5 @@ Full self-assessment, worked examples, improvement log: `references/AUTORESEARCH
 
 ---
 
+*v1.8.0 — Watson 🎩 | 2026-03-27 | Phase 0 pre-install security vetting added (from @AgentMcClaw T9 KI card)*
 *v1.7.0 — Watson 🎩 | 2026-03-18 | complete-code-review: B1–B3 + S1–S9 all fixed; 12 issues resolved*
