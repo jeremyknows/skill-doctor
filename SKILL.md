@@ -75,7 +75,7 @@ Skills get full agent permissions — filesystem, credentials, browser, messagin
 - Host: GitHub only (not raw pastebin, unknown CDNs, DMs)
 - Author: check account age, prior skills, stars/forks on repo
 - CVE check: `grep -i "cve\|vulnerability\|exploit" <skill-repo>/README.md`
-- Blocklist check: `grep -i "<skill-name>" ~/.openclaw/skills/.blocklist 2>/dev/null`
+- Blocklist check: `grep -i "<skill-name>" ~/.skill-doctor/blocklist 2>/dev/null` (OC: `~/.openclaw/skills/.blocklist`)
 
 **Step 2 — VirusTotal Check (MANDATORY for ClawHub skills):**
 - ClawHub pages show VT grade automatically — any flag = stop, do not install
@@ -87,7 +87,7 @@ Check for:
 - [ ] Obfuscation or encoded content (base64 blocks, hex strings, eval() calls)
 - [ ] Network calls to unknown domains (grep for `fetch\|curl\|axios\|http`)
 - [ ] Credential access (grep for `OPENAI_API_KEY\|token\|secret\|password`)
-- [ ] Filesystem ops outside workspace (grep for paths outside `~/.openclaw/`)
+- [ ] Filesystem ops outside expected workspace (grep for absolute paths outside the agent's workspace dir)
 - [ ] Shell exec with external input (`exec\|spawn\|eval` on user-controlled data)
 - [ ] Unexplained binaries or compiled artifacts in repo
 
@@ -103,7 +103,7 @@ Check for:
 4. Author account < 30 days with no other public skills
 5. Typosquatting (name differs from known skill by 1-2 chars)
 6. Unknown domain in network calls not explained in README
-7. On blocklist at `~/.openclaw/skills/.blocklist`
+7. On blocklist at `~/.skill-doctor/blocklist` (OC: `~/.openclaw/skills/.blocklist`)
 8. Permission scope massively exceeds stated purpose
 9. No source code — binary-only distribution
 
@@ -122,7 +122,7 @@ Conditions (if any): <list>
 
 **Step 7 — Install only after Jeremy explicit approval.** Present the vetting report, wait for confirmation. If sandbox mode is available, test there first.
 
-**Reference:** Full protocol at `docs/knowledge/skills/skill-security-vetting-protocol.md`
+**Reference:** Full protocol at `docs/knowledge/skills/skill-security-vetting-protocol.md` *(OpenClaw workspace — skip if not present)*
 
 ---
 
@@ -181,7 +181,7 @@ If hits found: flag to Jeremy before running PRISM. Do not let reviewers quote c
 
 **Step 1 — Setup (bash):**
 ```bash
-PRISM_CONFIG=$(bash ~/.openclaw/skills/skill-doctor/scripts/prism-setup.sh <skill-name> [skill-path])
+PRISM_CONFIG=$(bash ./scripts/prism-setup.sh <skill-name> [skill-path])
 echo "$PRISM_CONFIG"
 # Outputs JSON: {skill_name, skill_path, run_dir, skill_md, reviewer_dir, archive_dir, reviewers{9}, manifest}
 ```
@@ -216,7 +216,7 @@ echo "$PRISM_CONFIG"
 
 **Step 5 — Build summary (bash):**
 ```bash
-bash ~/.openclaw/skills/skill-doctor/scripts/prism-summary.sh "$RUN_DIR" "<skill-name>"
+bash ./scripts/prism-summary.sh "$RUN_DIR" "<skill-name>"
 # Outputs path to SUMMARY.md
 ```
 
@@ -298,7 +298,7 @@ For each condition:
 | No Dependencies section | Add `## Dependencies` — list tools, scripts, companion skills |
 | No Autoresearch section | Add from template in `references/autoresearch-scorecard-template.md` |
 | File > 500 lines | Extract spawn templates, examples, or long reference tables to `references/` |
-| Stale skill name references | `grep -rn "[old-name]" ~/.openclaw/agents/main/workspace/ 2>/dev/null \| grep -v ".git"` |
+| Stale skill name references | `grep -rn "[old-name]" <your-workspace>/ 2>/dev/null \| grep -v ".git"` |
 | Broken sessions_spawn params | Remove `model=`, `max_depth=`, `timeout_minutes=` — these are not valid API params |
 | "Iron Law" / railroading | Soften to principle-based language; replace NEVER with conditional guidance where appropriate |
 
@@ -342,17 +342,19 @@ Post the before/after score table.
 ## Phase 6: Archive
 
 Write PRISM archive to:
-`~/.openclaw/agents/main/workspace/analysis/prism/archive/[skill-name]/[date]-review.md`
+`~/.skill-doctor/archive/[skill-name]/[date]-review.md`
+*(OC: `~/.openclaw/agents/main/workspace/analysis/prism/archive/[skill-name]/[date]-review.md`)*
 
 Archive format: see `references/archive-template.md`.
 
-Update `docs/knowledge/skills/SKILL-HEALTH-SCORES.md` with new score and date.
+Update your skill health log with the new score and date *(OC: `docs/knowledge/skills/SKILL-HEALTH-SCORES.md`)*.
 
 ## Phase 6b: Stalled Condition Detection (if prior audits exist)
 
 ```bash
 # Check for prior archives on this skill
-ls ~/.openclaw/agents/main/workspace/analysis/prism/archive/[skill-name]/
+ls ~/.skill-doctor/archive/[skill-name]/
+# (OC: ls ~/.openclaw/agents/main/workspace/analysis/prism/archive/[skill-name]/)
 ```
 
 For each Tier 1 condition in this audit:
@@ -360,7 +362,8 @@ For each Tier 1 condition in this audit:
 2. If flagged in ≥2 prior audits → mark as **STALLED** in this archive
 3. STALLED conditions → emit bus event:
    ```bash
-   bash ~/.openclaw/scripts/emit-event.sh agent task_stalled "[skill-name]: [condition summary]" "" "skills"
+   # OpenClaw: bash ~/.openclaw/scripts/emit-event.sh agent task_stalled "[skill-name]: [condition summary]" "" "skills"
+   # Other runtimes: log the stalled condition to your task tracker or notify manually
    ```
 
 Jeremy reviews stalled conditions at next session and decides: fix, defer permanently, or close as won't-fix.
@@ -390,7 +393,7 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 - **Synthesis Agent output is advisory.** Read `synthesis.md` critically — it applies its tiering rules mechanically. If a condition is mistiered, correct it in Phase 3 before presenting to Jeremy.
 - **Round 2 is only valuable if Round 1 conditions changed the structure.** If fixes were cosmetic (wording, typos), skip Round 2.
 - **Stale references are more common than they look.** Always run the blast radius grep before calling a rename done.
-- **skills in `~/.npm-global/` are read-only from Watson's perspective** — edits go to `~/.openclaw/skills/` local overrides. Confirm path before writing.
+- **Know where your live skills dir is.** OpenClaw: `~/.openclaw/skills/` (npm-installed skills at `~/.npm-global/` are read-only — override by copying to skills dir). Claude Code: `~/.claude/skills/`. Confirm path before writing.
 - **sessions_spawn params**: `model=`, `max_depth=`, `timeout_minutes=` are NOT valid. Model selection goes in the task prompt body.
 - **Autoresearch baselines are only meaningful if generated consistently.** Run 3–5 real outputs, not synthetic examples.
 
@@ -404,11 +407,11 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 - `complete-code-review` skill — For software code review; this skill is for skill files only
 - `skill-creator` skill — For creating new skills from scratch; this skill improves existing ones
 - `publish-skills` skill — For publishing to GitHub after improvement
-- `docs/knowledge/skills/AUTORESEARCH-MASTER.md` — Full autoresearch loop spec
-- `docs/knowledge/skills/SKILLS-INVENTORY.md` — 115-skill catalogue with health scores
-- `docs/knowledge/skills/SKILL-HEALTH-SCORES.md` — Audit results, updated after each improvement
-- `bash ~/.openclaw/scripts/sub-agent-complete.sh` — Phase 6 bus emission
-- `bash ~/.openclaw/scripts/emit-event.sh` — Phase 6b stalled condition detection
+- `docs/knowledge/skills/AUTORESEARCH-MASTER.md` — Full autoresearch loop spec *(OpenClaw workspace)*
+- `docs/knowledge/skills/SKILLS-INVENTORY.md` — Skill catalogue with health scores *(OpenClaw workspace)*
+- `docs/knowledge/skills/SKILL-HEALTH-SCORES.md` — Audit results log *(OpenClaw workspace)*
+- `bash ~/.openclaw/scripts/sub-agent-complete.sh` — Phase 6 bus emission *(OpenClaw only, optional)*
+- `bash ~/.openclaw/scripts/emit-event.sh` — Phase 6b stalled condition detection *(OpenClaw only, optional)*
 
 ---
 
@@ -429,7 +432,7 @@ publish-skills covers: frontmatter spec compliance, LICENSE.txt, README patterns
 
 **Baseline:** 12/14 (self-scored, 2026-03-18 — PRISM dogfood validated on 6 real skills)
 **Q13 (empirical):** ⚠️ PARTIAL — run on 6 skills this session (build-feature, veefriends-seo, complete-code-review, prism, librarian, coding-agent). Scoring is consistent; formal log in `references/AUTORESEARCH-SELF-ASSESSMENT.md`.
-**Q14 (observability):** ⚠️ PARTIAL — sub-agent-complete.sh emits on Phase 6; prism-summary.sh emits on review completion. No per-run quality log yet.
+**Q14 (observability):** ⚠️ PARTIAL — prism-summary.sh emits on review completion. OpenClaw: sub-agent-complete.sh emits on Phase 6. No per-run quality log yet.
 
 **Mutation candidates (top 3):**
 1. Add helper script for common stale-ref grep (reduces Phase 4 friction)
